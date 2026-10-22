@@ -1,0 +1,18 @@
+opencode-vcc
+Copyright (c) 2026 opencode-vcc contributors
+
+This project is a port of pi-vcc (https://github.com/sting8k/pi-vcc),
+Copyright (c) 2026 sting8k, licensed under the MIT License.
+
+Portions of the source code are derived from pi-vcc:
+
+  - src/core/  (extraction, normalization, search, formatting, brief ranking)
+  - src/extract/
+  - src/sections.ts
+  - src/details.ts
+
+Portions are derived from pi-blackhole
+(https://github.com/k0valik/pi-blackhole), Copyright (c) k0valik, also
+licensed under the MIT License, as noted in the files that carry that code.
+
+The MIT License text is reproduced in LICENSE.
