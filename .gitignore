@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.DS_Store
+
+# Upstream reference copy (MIT, © sting8k) — fetched, not part of the port.
+vendor/

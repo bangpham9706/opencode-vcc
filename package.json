@@ -1,0 +1,36 @@
+{
+  "name": "opencode-vcc",
+  "version": "1.0.0",
+  "description": "Algorithmic conversation compactor for OpenCode - transcript-preserving structured summaries, no LLM calls",
+  "type": "module",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "server.ts",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@opencode/plugin": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "author": "",
+  "repository": {
+    "url": "https://github.com/sting8k/pi-vcc"
+  }
+}
