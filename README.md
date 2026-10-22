@@ -105,6 +105,30 @@ The plugin is a plain directory OpenCode can load:
 It is also published as a package (`opencode-vcc`) with the same default
 export; point `plugins` at the package name to use it.
 
+OpenCode auto-discovers plugins in `<config>/plugins/`, so a symlink installs
+it for every project on the machine:
+
+```bash
+ln -s ~/src/opencode-vcc ~/.config/opencode/plugins/opencode-vcc
+```
+
+The symlink is followed (the discovery accepts symlinked directories), so
+editing the source is immediately live. Auto-discovery takes no options,
+though: to enable `debug` for a globally installed plugin, add it to the
+`plugins` list of the config explicitly:
+
+```jsonc
+{
+  "plugins": [
+    { "package": "~/.config/opencode/plugins/opencode-vcc", "options": { "debug": true } }
+  ]
+}
+```
+
+With `debug` on, the plugin writes `<tmp>/opencode-vcc-debug.json`: the
+registered tools and commands, and for every compaction the cut, the
+sections and the token calibration.
+
 Development
 -----------
 
