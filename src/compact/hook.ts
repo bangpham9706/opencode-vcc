@@ -16,9 +16,6 @@
  * distinction at the hook (treated alike), no follow-up auto-continue (OpenCode
  * resumes its own run), and callback-based notifications are dropped.
  */
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { writeFileSync } from "node:fs";
 import type { SummaryMessage } from "../types";
 import { textOf } from "../core/content";
 import { isCompactionCheckpoint, summaryOfCheckpoint } from "../core/normalize";
@@ -42,6 +39,7 @@ import type { SnapStore } from "../oc/snapstore";
 import type { VccSettings } from "../oc/settings";
 import type { PendingVcc } from "../oc/pending";
 import { takePendingFrom } from "../oc/pending";
+import { writeDebug } from "../oc/debug";
 
 // Ranked brief budget, as pi-vcc shipped it (hooks/before-compact.ts).
 const RANKED_BRIEF_BUDGET_TOKENS = 1100;
@@ -84,15 +82,6 @@ export interface CompactionOutcome {
 
 const isCheckpointMessage = (msg: SummaryMessage): boolean =>
   msg.role === "user" && isCompactionCheckpoint(textOf(msg));
-
-const dbg = (settings: VccSettings, data: Record<string, unknown>): void => {
-  if (!settings.debug) return;
-  try {
-    writeFileSync(join(tmpdir(), "opencode-vcc-debug.json"), JSON.stringify(data, null, 2));
-  } catch {
-    // Debug output must never break compaction.
-  }
-};
 
 /**
  * Build the handler bound to the plugin's settings, index store and the
@@ -152,7 +141,7 @@ export const createCompactionHandler =
     // token-budget cut. An explicit keep:N is respected absolutely.
     if (cut.ok && !explicit) cut = applyTailBudget(items, cut, { charsPerToken });
     if (!cut.ok) {
-      dbg(settings, { cancelled: true, reason: cut.reason, liveCount: items.length });
+      writeDebug(settings, { cancelled: true, reason: cut.reason, liveCount: items.length });
       return { handled: false, reason: "nothing_to_compact" };
     }
 
@@ -181,7 +170,7 @@ export const createCompactionHandler =
     });
 
     if (!summary) {
-      dbg(settings, { cancelled: true, reason: "empty_summary" });
+      writeDebug(settings, { cancelled: true, reason: "empty_summary" });
       return { handled: false, reason: "nothing_to_compact" };
     }
 
@@ -228,7 +217,7 @@ export const createCompactionHandler =
       keptTokensEst,
     });
 
-    dbg(settings, {
+    writeDebug(settings, {
       usedOwnCut: true,
       isVcc,
       keepID: cut.firstKeptId || null,

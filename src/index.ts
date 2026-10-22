@@ -14,6 +14,7 @@
  */
 import { Plugin } from "@opencode/plugin";
 import { loadSettings } from "./oc/settings";
+import { writeDebug } from "./oc/debug";
 import { SnapStore } from "./oc/snapstore";
 import { pendingVcc } from "./oc/pending";
 import { createCompactionHandler } from "./compact/hook";
@@ -35,6 +36,22 @@ export const plugin = Plugin.define({
 
     await registerRecallTool(ctx);
     await registerVccCommands(ctx);
+
+    if (settings.debug) {
+      // A registration the host rejects is silent, so debug mode reports what
+      // is actually live.
+      writeDebug(settings, { options: ctx.options ?? {} });
+      try {
+        const tools = await ctx.tool.list();
+        const commands = await ctx.command.list();
+        writeDebug(settings, {
+          registeredTools: tools.map((t) => t.id),
+          registeredCommands: commands.data.map((c) => c.name),
+        });
+      } catch (error) {
+        writeDebug(settings, { registrationError: String(error) });
+      }
+    }
 
     return async () => {
       await compaction.dispose();
