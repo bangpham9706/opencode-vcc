@@ -9,6 +9,13 @@ This is a port of [pi-vcc](https://github.com/sting8k/pi-vcc) (MIT, © 2026
 sting8k) from [Pi](https://github.com/earendil-works/pi-coding-agent) to
 OpenCode. See `NOTICE` for attribution.
 
+> **Great together:** pair this with
+> [opencode-auto-compact](https://github.com/bangpham9706/opencode-auto-compact)
+> — auto-compact decides *when* to compact (predictive, before the next
+> turn overflows the context window), opencode-vcc decides *how* the summary
+> is written (algorithmic, structured, with full recall). They are designed
+> as companions and share no config.
+
 What it does
 ------------
 
@@ -26,6 +33,63 @@ compaction with an algorithmic one:
   instead of it being lost.
 * The tail of the conversation (the last user turn by default) is kept
   verbatim, so the model still sees the immediate context.
+
+Install
+-------
+
+Clone the plugin directly into OpenCode's global plugin directory and install
+its runtime dependency:
+
+```bash
+git clone https://github.com/bangpham9706/opencode-vcc \
+  ~/.config/opencode/plugins/opencode-vcc
+cd ~/.config/opencode/plugins/opencode-vcc
+npm install --omit=dev
+opencode service restart
+```
+
+That is everything: any directory under `~/.config/opencode/plugins/` is
+auto-discovered and loaded for every project.
+
+Verify it loaded — after the restart, this should show no plugin errors:
+
+```bash
+opencode api get /api/info            # server is up
+grep "loading plugin" \
+  ~/.local/share/opencode/log/opencode.log | tail -2
+```
+
+### Alternative: clone elsewhere, symlink into place
+
+If you prefer to keep the checkout in a source directory:
+
+```bash
+git clone https://github.com/bangpham9706/opencode-vcc ~/src/opencode-vcc
+cd ~/src/opencode-vcc && npm install --omit=dev
+ln -s ~/src/opencode-vcc ~/.config/opencode/plugins/opencode-vcc
+opencode service restart
+```
+
+The symlink is followed, so editing the source is immediately live after a
+service restart.
+
+### Optional: enable debug output
+
+Auto-discovery takes no options. To pass options (e.g. `debug`), also add the
+plugin to `opencode.json(c)`:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    { "package": "~/.config/opencode/plugins/opencode-vcc", "options": { "debug": true } }
+  ]
+}
+```
+
+With `debug` on, the plugin writes `<tmp>/opencode-vcc-debug.json`: the
+registered tools and commands, and for every compaction the cut, the
+sections and the token calibration.
 
 Usage
 -----
@@ -53,26 +117,8 @@ vcc_recall({ query: "#12:src/auth.ts" })   // file content of that entry
 Config
 ------
 
-Options are read from the plugin's `options` in `opencode.json(c)`:
-
-```jsonc
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugins": [
-    {
-      "package": "/path/to/opencode-vcc",
-      "options": {
-        "overrideDefaultCompaction": true,
-        "smartKeepTail": true,
-        "debug": false,
-        "skipForProviders": [],
-        "skipNativeCompactionModels": true,
-        "trackCommands": []
-      }
-    }
-  ]
-}
-```
+Options are read from the plugin's `options` in `opencode.json(c)` (see the
+Install section for where to put them):
 
 * **`overrideDefaultCompaction`** (default `true`): opencode-vcc handles
   `/compact` and automatic compactions as well as `/vcc`. With `false` only
@@ -91,52 +137,33 @@ Options are read from the plugin's `options` in `opencode.json(c)`:
 * **`trackCommands`** (default `[]`): command names whose runs are tracked in
   the `[Tracked Commands]` section, e.g. `["ssh", "kubectl"]`. Off by default.
 
-Install
--------
+Trying it out
+-------------
 
-The plugin is a plain directory OpenCode can load:
-
-```jsonc
-{
-  "plugins": ["/path/to/opencode-vcc"]
-}
-```
-
-It is also published as a package (`opencode-vcc`) with the same default
-export; point `plugins` at the package name to use it.
-
-OpenCode auto-discovers plugins in `<config>/plugins/`, so a symlink installs
-it for every project on the machine:
-
-```bash
-ln -s ~/src/opencode-vcc ~/.config/opencode/plugins/opencode-vcc
-```
-
-The symlink is followed (the discovery accepts symlinked directories), so
-editing the source is immediately live. Auto-discovery takes no options,
-though: to enable `debug` for a globally installed plugin, add it to the
-`plugins` list of the config explicitly:
-
-```jsonc
-{
-  "plugins": [
-    { "package": "~/.config/opencode/plugins/opencode-vcc", "options": { "debug": true } }
-  ]
-}
-```
-
-With `debug` on, the plugin writes `<tmp>/opencode-vcc-debug.json`: the
-registered tools and commands, and for every compaction the cut, the
-sections and the token calibration.
+Start a session, work until OpenCode would compact (`/compact` to force it),
+and compare the summary you get — a fixed-section structured digest plus a
+short kept tail — against OpenCode's default model-written summary. With
+`debug: true`, every compaction's cut and statistics land in
+`<tmp>/opencode-vcc-debug.json`.
 
 Development
 -----------
 
 ```bash
-npm install
+npm install        # dev deps; runtime only needs the --omit=dev set
 npm run typecheck
 npm test
 ```
+
+Companion plugin
+----------------
+
+[opencode-auto-compact](https://github.com/bangpham9706/opencode-auto-compact)
+tracks how many tokens each user turn costs in your sessions and triggers
+compaction *before* the next turn would push the context past a target
+percentage of the model's window. Where opencode-vcc answers "how should the
+summary look?", auto-compact answers "when should we compact?" — install both
+and the two plug into each other with zero configuration.
 
 Parity with pi-vcc
 ------------------
